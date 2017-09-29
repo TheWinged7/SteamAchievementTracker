@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
@@ -32,12 +33,21 @@ public class Account {
     private static List<Thread> threads;
 
     public Account(String id, boolean friend) {
-
+        Thread th;
         try {
             ID = SteamId.create(id);
             ID.fetchData();
-            URL iconUrl = null;
+
             icon = null;
+
+        } catch (SteamCondenserException ex) {
+            Logger.getLogger(Account.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        if (!friend) {
+            System.out.println("should only happen once");
+            friends = new ArrayList<Account>();
+            threads = new ArrayList<Thread>();
+            URL iconUrl = null;
             try {
                 iconUrl = new URL(ID.getAvatarIconUrl());
                 if (iconUrl != null) {
@@ -51,28 +61,16 @@ public class Account {
                 Logger.getLogger(Account.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-        } catch (SteamCondenserException ex) {
-            Logger.getLogger(Account.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        if (!friend) {
-            System.out.println("should only happen once");
-            friends = new ArrayList<Account>();
-            threads = new ArrayList<Thread>();
-
-            Account t = this;
-            Thread th;
-
-            th = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    fetchInfo fr = new fetchInfo(t, 0);
-                    // Thread T = new Thread(fr);
-                    // threads.add(T);
-                    fr.run();
-                }
-            });
-            threads.add(th);
-            th.start();
+//            th = new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+            //fetchFriends();
+            //Thread T = new Thread(fetchFriends());
+            // T.start();
+//                }
+//            });
+//            threads.add(th);
+//            th.start();
 
             //threads.get(threads.size()-1).start();
             System.out.println(ID.getNickname());
@@ -82,8 +80,7 @@ public class Account {
     public void haltThreads() {
 
         for (int i = 0; i < threads.size(); i++) {
-            if (threads.get(i).isAlive())
-            {
+            if (threads.get(i).isAlive()) {
                 System.out.println("thread " + i + " is alive");
             }
             threads.get(i).interrupt();
@@ -96,8 +93,17 @@ public class Account {
         try {
             ID = SteamId.create(id);
             ID.fetchData();
-            URL iconUrl = null;
+
             icon = null;
+
+        } catch (SteamCondenserException ex) {
+            Logger.getLogger(Account.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        if (!friend) {
+            System.out.println("should only happen once");
+            friends = new ArrayList<Account>();
+
+            URL iconUrl = null;
             try {
                 iconUrl = new URL(ID.getAvatarIconUrl());
                 if (iconUrl != null) {
@@ -111,26 +117,63 @@ public class Account {
                 Logger.getLogger(Account.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-        } catch (SteamCondenserException ex) {
-            Logger.getLogger(Account.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        if (!friend) {
-            System.out.println("should only happen once");
-            friends = new ArrayList<Account>();
-
-            Account t = this;
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    fetchInfo fr = new fetchInfo(t, 0);
-                    Thread T = new Thread(fr);
-                    T.run();;
-                }
-            }).start();
+            //Account t = this;
+//            Thread th;
+//            th = new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+           // fetchFriends();
+            //Thread T = new Thread(fetchFriends());
+            //T.start();
+//                }
+//            });
+//            threads.add(th);
+//            th.start();
 
             //why has this classes ID changed when it shouldnt have?
             System.out.println(ID.getNickname());
         }
+    }
+
+    public void fetchFriends() {
+        List<SteamId> ids;
+        ids = new ArrayList();
+        if (!ID.isFetched()) {
+            try {
+                ID.fetchData();
+                System.out.println("fetching ID info");
+
+            } catch (SteamCondenserException ex) {
+                Logger.getLogger(Account.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        boolean fetched = false, completed = false;
+
+        // while (!Thread.interrupted() && !completed) {
+        if (!fetched) {
+            try {
+                ids = Arrays.asList(ID.getFriends());
+            } catch (SteamCondenserException ex) {
+                Logger.getLogger(Account.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            fetched = true;
+        }
+        if (!completed) {
+            ids.forEach((id)
+                    -> {
+                try {
+                    id.fetchData();
+                } catch (SteamCondenserException ex) {
+                    Logger.getLogger(Account.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                System.out.println(id.getNickname());
+                friends.add(new Account(id.getSteamId64(), true));
+            }
+            );
+            completed = true;
+            // }
+        }
+        // return "completed";
     }
 
     public void testFriends() {
@@ -160,25 +203,6 @@ public class Account {
 
     public String getNickname() {
         return ID.getNickname();
-    }
-
-    public void setFriends(List<Account> fr) {
-        if (fr != null) {
-            // SteamId current = ID; //shitty workarround that shouldnt be needed
-            /*
-            System.out.println("shouldnt be null, length:" + fr.size());
-            fr.forEach((id) -> {
-                //somehow this is chaning this Accounts ID
-                System.out.println("ID before adding friend: " + ID.getNickname());
-                friends.add(new Account(id.getSteamId64(), true) );
-                System.out.println("current ID: " + ID.getNickname()+"\n");
-            });*/
-            System.out.println("attempting to add friends");
-            friends.addAll(fr);
-            // ID = current;//shitty workarround that shouldnt be needed
-        } else {
-            System.out.println("Shits null mate");
-        }
     }
 
 }

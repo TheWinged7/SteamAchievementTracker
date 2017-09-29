@@ -5,20 +5,15 @@
  */
 package com.mycompany.steamachievementtracker;
 
-
 import com.github.koraktor.steamcondenser.steam.community.*;
 import com.mycompany.steamachievementtracker.SteamHandler;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.ImageIcon;
-
-
-
-
-
 
 /**
  *
@@ -31,9 +26,12 @@ public class MainUI extends javax.swing.JFrame {
      */
     private static SteamHandler sh;
     private static List<ImageIcon> friendIcons;
+    private static List<Thread> threads;
+
     public MainUI() {
         initComponents();
-       sh = new SteamHandler();
+        threads = new ArrayList();
+        sh = new SteamHandler();
     }
 
     /**
@@ -259,56 +257,77 @@ public class MainUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    
-    public void setIcon()
-    {
-        Image accIcon = sh.getAccountIcon().getScaledInstance(34,34,
-            java.awt.Image.SCALE_SMOOTH);
-        AccountIcon.setIcon(new javax.swing.ImageIcon(accIcon));
-        AccountIcon.setText("");
+    public void setIcon() {
+        if (sh != null) {
+            Image accIcon = sh.getAccountIcon().getScaledInstance(34, 34,
+                    java.awt.Image.SCALE_SMOOTH);
+            AccountIcon.setIcon(new javax.swing.ImageIcon(accIcon));
+            AccountIcon.setText("");
+        }
     }
-    
-    public void setNickname()
-    {
+
+    public void setNickname() {
         AccountName.setText(sh.getNickname());
     }
-    
-    
+
+
     private void IDSearchBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_IDSearchBoxActionPerformed
         // TODO add your handling code here:
-           String user =IDSearchBox.getText();
-           //SteamId selectedUser = null;
-           System.out.println(user);
-           if (user.matches("^[0-9]*$") && user.length()==17)
-           {
-               System.out.println("long version");
-               long id = Long.parseLong(user);
-                if (sh.setID(id))
-                {
-                    System.out.println("Success setting ID");
-                    setIcon();
-                    setNickname();
+        String user = IDSearchBox.getText();
+        //SteamId selectedUser = null;
+        //  System.out.println(user);
+        if (user.matches("^[0-9]*$") && user.length() == 17) {
+            System.out.println("long version");
+            long id = Long.parseLong(user);
+
+//            for (int i = 0; i < threads.size(); i++) {
+//                if (threads.get(i).isAlive()) {
+//                    threads.get(i).interrupt();
+//                }
+//            }
+            Thread th;
+            th = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    if (sh.setID(id)) {
+                        System.out.println("Success setting ID");
+                        setIcon();
+                        setNickname();
+                        sh.setFriends();
+                    }
+
                 }
-           }
-           else if (user.length()>0)
-           {
-               System.out.println("string version");
-               //need some validation here i guess
-               
-               
-               if (sh.setID(user))
-                {
-                    System.out.println("Success setting ID");
-                    setIcon();
-                    setNickname();
+            });
+            threads.add(th);
+            th.start();
+        } else if (user.length() > 0) {
+            System.out.println("string version");
+            //need some validation here i guess
+//            for (int i = 0; i < threads.size(); i++) {
+//                if (threads.get(i).isAlive()) {
+//                    threads.get(i).interrupt();
+//                }
+//            }
+            Thread th;
+            th = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    if (sh.setID(user)) {
+                        System.out.println("Success setting ID");
+                        setIcon();
+                        setNickname();
+                        sh.setFriends();
+                    }
+
                 }
-           }
-           if (sh.getID()!=null)
-           {
-               System.out.println("Get via user input\t"+sh.getID().getNickname());
-           }
-           
-           /*
+            });
+            threads.add(th);
+            th.start();
+
+        }
+
+
+        /*
            thewinged7:
            76561198022970953
            grom:
@@ -318,57 +337,70 @@ public class MainUI extends javax.swing.JFrame {
            slayer (? catria)
            76561198083901071
            [TBoS]Grim_Fate56 | TPI //grom your already breaking shit -_-
-           */
+         */
     }//GEN-LAST:event_IDSearchBoxActionPerformed
 
-    
-    
+
     private void SearchIconMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_SearchIconMouseClicked
         // TODO add your handling code here:
-       if (evt.getButton()==MouseEvent.BUTTON1)
-       {
-           String user =IDSearchBox.getText();
-           //SteamId selectedUser = null;
-           System.out.println(user);
-           if (user.matches("^[0-9]*$") && user.length()==17)
-           {
-               System.out.println("long version");
-               long id = Long.parseLong(user);
-                if (sh.setID(id))
-                {
-                    System.out.println("Success setting ID");
-                    setIcon();
-                    setNickname();
-                }
-           }
-           else if (user.length()>0)
-           {
-               System.out.println("string version");
-               //need some validation here i guess
-               
-               
-               if (sh.setID(user))
-                {
-                    System.out.println("Success setting ID");
-                    setIcon();
-                    setNickname();
-                }
-           }
-           if (sh.getID()!=null)
-           {
-               System.out.println("Get via user input\t"+sh.getID().getNickname());
-           }
-       }
-       else
-       {
-           System.out.println(evt.getButton());
-       }
+        if (evt.getButton() == MouseEvent.BUTTON1) {
+            String user = IDSearchBox.getText();
+            //SteamId selectedUser = null;
+            System.out.println(user);
+            if (user.matches("^[0-9]*$") && user.length() == 17) {
+                System.out.println("long version");
+                long id = Long.parseLong(user);
+
+//                for (int i = 0; i < threads.size(); i++) {
+//                    if (threads.get(i).isAlive()) {
+//                        threads.get(i).interrupt();
+//                    }
+//                }
+                Thread th;
+                th = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (sh.setID(id)) {
+                            System.out.println("Success setting ID");
+                            setIcon();
+                            setNickname();
+                        }
+
+                    }
+                });
+                threads.add(th);
+                th.start();
+            } else if (user.length() > 0) {
+                System.out.println("string version");
+                //need some validation here i guess
+//                for (int i = 0; i < threads.size(); i++) {
+//                    if (threads.get(i).isAlive()) {
+//                        threads.get(i).interrupt();
+//                    }
+//                }
+                Thread th;
+                th = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (sh.setID(user)) {
+                            System.out.println("Success setting ID");
+                            setIcon();
+                            setNickname();
+                        }
+
+                    }
+                });
+                threads.add(th);
+                th.start();
+            }
+            if (sh.getID() != null) {
+                System.out.println("Get via user input\t" + sh.getID().getNickname());
+            }
+        } else {
+            System.out.println(evt.getButton());
+        }
     }//GEN-LAST:event_SearchIconMouseClicked
 
-    
-    
- 
-    
     /**
      * @param args the command line arguments
      */
